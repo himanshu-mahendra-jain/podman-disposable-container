@@ -1,0 +1,49 @@
+[Unit]
+Description=Hardened disposable container
+
+[Container]
+ContainerName=disposable
+Image=localhost/disposable:alpine
+Exec=sleep infinity
+StopSignal=SIGKILL
+Secret=disposable-ssh-key,target=/home/disposable-container/.ssh/test,uid=1000,gid=1000,mode=0400
+
+# Privilege isolation
+DropCapability=all
+NoNewPrivileges=true
+
+# Immutable root filesystem
+ReadOnly=true
+ReadOnlyTmpfs=true
+
+# Temporary storage
+Tmpfs=/tmp:rw,noexec,nosuid,nodev
+Tmpfs=/run:rw,noexec,nosuid,nodev
+
+# Resource limits
+PidsLimit=32
+
+# Restrict sensitive kernel/proc interfaces
+Mask=/proc/acpi:/proc/kcore:/proc/keys:/proc/latency_stats:/proc/sched_debug:/proc/scsi:/proc/timer_list:/proc/timer_stats:/sys/firmware:/sys/fs/selinux:/sys/kernel/debug:/sys/kernel/tracing:/sys/kernel/security
+
+# Rootless user-mode networking
+Network=pasta:--ipv4-only,--no-udp,--no-icmp,--no-dhcp,--no-map-gw
+
+# Use only the explicitly built local image
+Pull=never
+
+[Service]
+Restart=no
+
+# Resource limits
+MemoryMax=128M
+CPUQuota=100%
+
+# Deny device access by default
+DevicePolicy=closed
+
+# Limit address families available to the service/runtime.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_NETLINK
+
+# SystemCall Filter
+SystemCallArchitectures=native
